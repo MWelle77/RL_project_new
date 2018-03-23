@@ -4,6 +4,7 @@ import datetime
 import numpy as np
 from gym import utils, spaces
 from gym.envs.mujoco import mujoco_env
+from scipy import signal
 
 
 def body_index(model, body_name):
@@ -20,32 +21,82 @@ def body_quat(model,body_name):
 
 
 class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
+    
+
     def __init__(self):
-        self.high = np.array([40, 35, 30, 20, 15, 10, 10])
-        self.low = -self.high
-        self.wt = 0.0
-        self.we = 0.0
+
+         #set up evil force
+        self._adv_bindex = 0#body_index(self.model,'gripper_r_finger_l')
+        self.adv_max_force = 0.1
+        self.randf =np.random.uniform(low=-self.adv_max_force, high=self.adv_max_force, size=(6,))*0
+        self.time =0
+
         root_dir = os.path.dirname(__file__)
-        xml_path = os.path.join(root_dir, 'yumi', 'yumi.xml')
+        xml_path = os.path.join(root_dir, 'yumi', 'yumi.xml') 
         mujoco_env.MujocoEnv.__init__(self, xml_path, 1)
         utils.EzPickle.__init__(self)
-
-        # Manually define this to let a be in [-1, 1]^d
-        self.action_space = spaces.Box(low=-np.ones(7) * 2, high=np.ones(7) * 2, dtype=np.float32)
+        self.obs_dim =self._get_obs().size
+        high = np.inf*np.ones(self.obs_dim)
+        low = -high
+        self.observation_space = spaces.Box(low, high)
+        
         self.init_params()
 
-    def init_params(self, wt=0.9, x=0.0, y=0.0, z=0.2):
-        """
-        :param wt: Float in range (0, 1), weight on euclidean loss
-        :param x, y, z: Position of goal
-        """
+    def init_params(self):
         qpos = self.init_qpos
         qvel = self.init_qvel
+        self._adv_bindex = body_index(self.model,'gripper_r_finger_l')
         self.set_state(qpos, qvel)
 
+    #evil force
+    def _adv_to_xfrc(self, adv_act):
+        new_xfrc = self.data.xfrc_applied*0.0
+        new_xfrc[self._adv_bindex] = np.array([adv_act[0], adv_act[1], adv_act[2], adv_act[3], adv_act[4], adv_act[5]])
+        self.data.xfrc_applied=new_xfrc
+
+
     def step(self, a):
-        a_real = a * self.high / 2
-        self.do_simulation(a_real, self.frame_skip)
+        print(self.randf)
+        self.time+=0.1#self.dt
+        a_real = a #* self.high / 2
+        self.do_simulation(a_real,1)
+        #evil forces
+        # Random forces
+        # =====================================================
+        #self.randf =np.random.uniform(low=-self.adv_max_force, high=self.adv_max_force, size=(6,))
+        #self._adv_to_xfrc(self.randf)
+        magn =  5 * self.adv_max_force  # in case you wanna change the magnitude, maybe make it random at every episode
+        
+        # Sine forces
+        # =====================================================
+        #sinusoidal_x = magn * np.sin(5 * np.pi * self.time)
+        #sinusoidal_y = 0.5*magn * np.sin(2.5 * np.pi * self.time)
+        # # for the time being, I;m assuming the forces are exerted only on x and
+        # # y axes (smaller freq for y) and there are no torques
+        #sine_forces = np.zeros_like(self.randf)
+        #sine_forces[:2] = sinusoidal_x, sinusoidal_y
+        #self.randf = sine_forces
+
+        # 3. Triangular forces a) from triangular distribution and b) of actual triangular shape, still only on x and y
+        # ======================================================
+        #triangular_forces = np.zeros_like(self.randf)
+        # a) the distribution
+        # triangular_forces[:2] = np.random.triangular(-self.adv_max_force, 0,  self.adv_max_force, size = (2,))
+        # self.randf = triangular_forces
+
+        # b) the sawtooth function 
+        triangle_x = magn * signal.sawtooth(5 * np.pi * self.time)
+        triangle_y = 0.5*magn * signal.sawtooth(2.5 * np.pi * self.time)
+        triangular_forces =np.zeros(6)
+        triangular_forces[:2] = triangle_x, triangle_y   
+        self.randf=triangular_forces
+
+        #====apply forces==========================
+        self._adv_to_xfrc(self.randf)
+
+
+        a_real = a #* self.high / 2
+        self.do_simulation(a_real)
         reward = self._reward(a_real)
         done = False
         ob = self._get_obs()
