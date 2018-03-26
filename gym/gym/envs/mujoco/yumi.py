@@ -26,7 +26,7 @@ class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
 
          #set up evil force
-        self._adv_bindex = 0#body_index(self.model,'gripper_r_finger_l')
+        self._adv_bindex = 0
         self.adv_max_force = 0.1
         self.randf =np.random.uniform(low=-self.adv_max_force, high=self.adv_max_force, size=(6,))*0
         self.time =0
@@ -50,22 +50,16 @@ class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
 
     #evil force
     def _adv_to_xfrc(self, adv_act):
-        new_xfrc = self.sim.data.xfrc_applied*0.0
-        new_xfrc[self._adv_bindex] = np.array([adv_act[0], adv_act[1], adv_act[2], adv_act[3], adv_act[4], adv_act[5]])
-        #self._xfrc_applied =new_xfrc
-        self.sim.data.xfrc_applied[self._adv_bindex]=np.array([adv_act[0], adv_act[1], adv_act[2], adv_act[3], adv_act[4], adv_act[5]])#new_xfrc
+        self.sim.data.xfrc_applied[self._adv_bindex]=np.array([adv_act[0], adv_act[1], adv_act[2], adv_act[3], adv_act[4], adv_act[5]])
 
 
     def step(self, a):
-        #print(self.randf)
-        self.time+=0.1#self.dt
-        a_real = a #* self.high / 2
+        self.time+=self.dt
+
         #evil forces
         # Random forces
         # =====================================================
-        self.randf =np.random.uniform(low=-self.adv_max_force, high=self.adv_max_force, size=(6,))*10
-        #self._adv_to_xfrc(self.randf)
-        #magn =  5 * self.adv_max_force  # in case you wanna change the magnitude, maybe make it random at every episode
+        self.randf =np.random.uniform(low=-self.adv_max_force, high=self.adv_max_force, size=(6,))
         
         # Sine forces
         # =====================================================
@@ -92,12 +86,10 @@ class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
         #self.randf=triangular_forces
 
         #====apply forces==========================
-        self._adv_to_xfrc(self.randf)
+        #self._adv_to_xfrc(self.randf)
 
-
-        a_real = a #* self.high / 2
-        self.do_simulation(a_real,self.frame_skip)
-        reward = self._reward(a_real)
+        self.do_simulation(a,self.frame_skip)
+        reward = self._reward(a)
         done = False
         ob = self._get_obs()
         return ob, reward, done, {}
@@ -106,8 +98,8 @@ class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
         arm = np.concatenate([body_pos(self.model, 'gripper_r_finger_l'),body_quat(self.model, 'gripper_r_finger_l')])
         goal =np.concatenate([body_pos(self.model, 'goal'),body_quat(self.model, 'goal')])
         arm2goal = np.linalg.norm(arm - goal)
-        return - np.linalg.norm(a)*1000
-        #return -arm2goal*100*0 - np.linalg.norm(a)*1000
+        return - np.linalg.norm(a) # movement is bad
+        #return -arm2goal*100*0 - np.linalg.norm(a)*1000 # distance to goal and movment get peneltys
 
     def _get_obs(self):
         return np.concatenate([

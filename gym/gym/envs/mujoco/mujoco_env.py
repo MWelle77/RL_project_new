@@ -38,18 +38,22 @@ class MujocoEnv(gym.Env):
 
         self.init_qpos = self.sim.data.qpos.ravel().copy()
         self.init_qvel = self.sim.data.qvel.ravel().copy()
-        #observation, _reward, done, _info = self.step(np.zeros(self.model.nu))
-        #assert not done
-        #self.obs_dim = observation.size
+        #<comment out for yumi
+        observation, _reward, done, _info = self.step(np.zeros(self.model.nu))
+        assert not done
+        self.obs_dim = observation.size
+        #/>
 
         bounds = self.model.actuator_ctrlrange.copy()
         low = bounds[:, 0]
         high = bounds[:, 1]
         self.action_space = spaces.Box(low=low, high=high)
 
-        #high = np.inf*np.ones(self.obs_dim)
-        #low = -high
-        #self.observation_space = spaces.Box(low, high)
+        #<comment out for yumi
+        high = np.inf*np.ones(self.obs_dim)
+        low = -high
+        self.observation_space = spaces.Box(low, high)
+        #/>
 
         self.seed()
 
