@@ -50,22 +50,22 @@ class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
 
     #evil force
     def _adv_to_xfrc(self, adv_act):
-        new_xfrc = self.data.xfrc_applied*0.0
+        new_xfrc = self.sim.data.xfrc_applied*0.0
         new_xfrc[self._adv_bindex] = np.array([adv_act[0], adv_act[1], adv_act[2], adv_act[3], adv_act[4], adv_act[5]])
-        self.data.xfrc_applied=new_xfrc
+        #self._xfrc_applied =new_xfrc
+        self.sim.data.xfrc_applied[self._adv_bindex]=np.array([adv_act[0], adv_act[1], adv_act[2], adv_act[3], adv_act[4], adv_act[5]])#new_xfrc
 
 
     def step(self, a):
-        print(self.randf)
+        #print(self.randf)
         self.time+=0.1#self.dt
         a_real = a #* self.high / 2
-        self.do_simulation(a_real,1)
         #evil forces
         # Random forces
         # =====================================================
-        #self.randf =np.random.uniform(low=-self.adv_max_force, high=self.adv_max_force, size=(6,))
+        self.randf =np.random.uniform(low=-self.adv_max_force, high=self.adv_max_force, size=(6,))*10
         #self._adv_to_xfrc(self.randf)
-        magn =  5 * self.adv_max_force  # in case you wanna change the magnitude, maybe make it random at every episode
+        #magn =  5 * self.adv_max_force  # in case you wanna change the magnitude, maybe make it random at every episode
         
         # Sine forces
         # =====================================================
@@ -85,18 +85,18 @@ class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
         # self.randf = triangular_forces
 
         # b) the sawtooth function 
-        triangle_x = magn * signal.sawtooth(5 * np.pi * self.time)
-        triangle_y = 0.5*magn * signal.sawtooth(2.5 * np.pi * self.time)
-        triangular_forces =np.zeros(6)
-        triangular_forces[:2] = triangle_x, triangle_y   
-        self.randf=triangular_forces
+        #triangle_x = magn * signal.sawtooth(5 * np.pi * self.time)
+        #triangle_y = 0.5*magn * signal.sawtooth(2.5 * np.pi * self.time)
+        #triangular_forces =np.zeros(6)
+        #triangular_forces[:2] = triangle_x, triangle_y   
+        #self.randf=triangular_forces
 
         #====apply forces==========================
         self._adv_to_xfrc(self.randf)
 
 
         a_real = a #* self.high / 2
-        self.do_simulation(a_real)
+        self.do_simulation(a_real,self.frame_skip)
         reward = self._reward(a_real)
         done = False
         ob = self._get_obs()
