@@ -53,6 +53,8 @@ foreceslist3=[]
 foreceslist4=[]
 foreceslist5=[]
 
+totalreward=0
+
 
 for _ in range(1000): # run for 1000 steps
     env.render()
@@ -62,11 +64,13 @@ for _ in range(1000): # run for 1000 steps
     #print("performing action:")
     #print(action)
     observation, reward, done, info = env.step(action)
+
     #print("observing")
     #print(observation)
     #print("reward")
     #print(reward)
     rewardlist.append(reward)
+    totalreward+=reward
 
     actionlist0.append(action[0])
     actionlist1.append(action[1])
@@ -89,11 +93,12 @@ for _ in range(1000): # run for 1000 steps
     #env.step(action) # take action
 
 #print(len(actionlist[1]))
-
+print(totalreward)
 plt.plot(rewardlist)
 plt.title('Reward (distance to goal pose)')
 plt.xlabel('episodes')
 plt.ylabel('reward')
+plt.ylim(-300, 0)
 plt.show()
 
 #x=np.linspace(0, 1000, num=100, endpoint=True)

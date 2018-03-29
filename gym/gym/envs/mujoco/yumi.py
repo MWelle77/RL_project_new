@@ -86,26 +86,41 @@ class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
         #self.randf=triangular_forces
 
         #====apply forces==========================
-        #self._adv_to_xfrc(self.randf)
-
+        self._adv_to_xfrc(self.randf)
+        #print("hej")
         self.do_simulation(a,self.frame_skip)
-        reward = self._reward(a)
+        reward = self.reward(a)
         done = False
         ob = self._get_obs()
         return ob, reward, done, {}
 
-    def _reward(self, a):
-        arm = np.concatenate([body_pos(self.model, 'gripper_r_finger_l'),body_quat(self.model, 'gripper_r_finger_l')])
-        goal =np.concatenate([body_pos(self.model, 'goal'),body_quat(self.model, 'goal')])
-        arm2goal = np.linalg.norm(arm - goal)
-        return - np.linalg.norm(a) # movement is bad
+    def reward(self, a):
+        #reward function Mutsionii 1
+        ee3pos = self.sim.data.get_body_xpos('gripper_r_finger_l')
+        target3pos = self.sim.data.get_body_xpos('goal')
+        d2=(ee3pos[0]-target3pos[0])**2+(ee3pos[1]-target3pos[1])**2+(ee3pos[2]-target3pos[2])**2
+        wl=0.001
+        alpha =0.1
+        wlog=1.0
+        wu=0.01
+        cost=(wl*d2+wlog*np.log(d2+alpha)+wu*np.linalg.norm(a)) 
+        #print(cost)       
+        #return -cost
+        #reward reacher
+        vec = self.sim.data.get_body_xpos('gripper_r_finger_l')-self.sim.data.get_body_xpos('goal')
+        reward_dist = - np.linalg.norm(vec)
+        reward_ctrl = - np.square(a).sum()
+
+        return reward_dist + reward_ctrl
+        #reward for doing nothing
+        #return - np.linalg.norm(a) # movement is bad
         #return -arm2goal*100*0 - np.linalg.norm(a)*1000 # distance to goal and movment get peneltys
 
     def _get_obs(self):
         return np.concatenate([
              self.sim.data.qpos.flat[:7],
-             body_pos(self.model, 'gripper_r_finger_l'),
-             body_pos(self.model, 'goal')
+             self.sim.data.get_body_xpos('gripper_r_finger_l'),
+             self.sim.data.get_body_xpos('goal')
          ])
 
     def reset_model(self):
