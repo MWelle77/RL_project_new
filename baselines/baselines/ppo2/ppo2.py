@@ -99,11 +99,10 @@ class Runner(object):
         self.states = model.initial_state
         self.dones = [False for _ in range(nenv)]
 
-    def run(self):
+    def run(self,show=False):
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones, mb_neglogpacs = [],[],[],[],[],[]
         mb_states = self.states
-        epinfos = []
-
+        epinfos = []        
         for _ in range(self.nsteps):
             actions, values, self.states, neglogpacs = self.model.step(self.obs, self.states, self.dones)
             mb_obs.append(self.obs.copy())
@@ -112,6 +111,16 @@ class Runner(object):
             mb_neglogpacs.append(neglogpacs)
             mb_dones.append(self.dones)
             self.obs[:], rewards, self.dones, infos = self.env.step(actions)
+
+
+            if(show):
+                print("***actions***")
+                print(actions)
+                print("***Rewards***")
+                print(rewards)
+                print("***observation***")
+                print(self.obs[:])
+                self.env.venv.envs[0].render()
             
 
             for info in infos:
@@ -157,10 +166,59 @@ def constfn(val):
         return val
     return f
 
+
+def eval(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
+            vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
+            log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
+            save_interval=0,name):
+    
+    total_timesteps = int(total_timesteps)
+
+    nenvs = env.num_envs
+    ob_space = env.observation_space
+    ac_space = env.action_space
+    nbatch = nenvs * nsteps
+    nbatch_train = nbatch // nminibatches
+
+    make_model = lambda : Model(policy=policy, ob_space=ob_space, ac_space=ac_space, nbatch_act=nenvs, nbatch_train=nbatch_train,
+                    nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
+                    max_grad_norm=max_grad_norm)
+    
+    model = make_model()
+    model.load(name)
+    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam)
+    
+    obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run(show=True)
+    total_reward=np.sum(returns)
+
+    print("total reward: " + str(total_reward))
+    plt.subplot(1, 2, 1)
+    plt.plot(returns)
+    plt.title('Reward ')
+    plt.xlabel('episodes')
+    plt.ylabel('reward')
+
+    plt.subplot(1, 2, 2)
+    plt.plot(actions)
+    plt.title('Actions ')
+    plt.xlabel('episodes')
+    plt.ylabel('action')
+
+    plt.show()
+
+
+    epinfobuf = deque(maxlen=100)
+    tfirststart = time.time()
+
+    nupdates = total_timesteps//nbatch
+    
+    env.close()
+
+
 def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
             log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
-            save_interval=0):
+            save_interval=0,name):
 
     if isinstance(lr, float): lr = constfn(lr)
     else: assert callable(lr)
@@ -189,6 +247,7 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
 
     nupdates = total_timesteps//nbatch
     for update in range(1, nupdates+1):
+        
         assert nbatch % nminibatches == 0
         nbatch_train = nbatch // nminibatches
         tstart = time.time()
@@ -246,6 +305,8 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
             savepath = osp.join(checkdir, '%.5i'%update)
             print('Saving to', savepath)
             model.save(savepath)
+    #save the model
+    model.save(name)
     env.close()
 
 def safemean(xs):

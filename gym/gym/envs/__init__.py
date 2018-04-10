@@ -3,7 +3,7 @@ from gym.envs.registration import registry, register, make, spec
 # ----------------------------------------
 register(
     id='Yumi-Simple-v0',
-    max_episode_steps=100,
+    max_episode_steps=1000,
     entry_point='gym.envs.mujoco:YumiEnvSimple',
 )
 

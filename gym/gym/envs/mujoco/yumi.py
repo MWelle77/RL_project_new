@@ -86,7 +86,7 @@ class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
         #self.randf=triangular_forces
 
         #====apply forces==========================
-        self._adv_to_xfrc(self.randf)
+        #self._adv_to_xfrc(self.randf)
         #print("hej")
         self.do_simulation(a,self.frame_skip)
         reward = self.reward(a)
