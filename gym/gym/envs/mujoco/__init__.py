@@ -15,3 +15,4 @@ from gym.envs.mujoco.pusher import PusherEnv
 from gym.envs.mujoco.thrower import ThrowerEnv
 from gym.envs.mujoco.striker import StrikerEnv
 from gym.envs.mujoco.yumi import YumiEnvSimple
+from gym.envs.mujoco.yumi_01 import YumiEnvSimple1

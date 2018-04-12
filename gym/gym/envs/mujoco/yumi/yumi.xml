@@ -3,7 +3,7 @@
     <visual>
         <quality shadowsize="10000"/>
     </visual>
-    <option timestep="0.01" gravity="0 0 0" iterations="20" integrator="Euler" />
+    <option timestep="0.01" gravity="0 0 0" integrator="Euler" />
     <size njmax="500" nconmax="100" />
     <asset>
         <mesh name="coarse_body" file="coarse_body.stl" />
@@ -18,7 +18,8 @@
         <mesh name="finger" file="finger.stl" />
     </asset>
     <worldbody>
-        <camera name="extra" mode="fixed" pos="1.0 0 0.2" euler="1.57 1.57 0"/>
+        <camera name="extra_1" mode="fixed" pos="1.0 0 0.2" euler="1.57 1.57 0"/>
+        <camera name="extra_2" mode="fixed" pos="0.7 0.7 0.2" euler="1.57 2.3 0"/>
         <light diffuse=".5 .5 .5" pos="2 -2 2" dir="-1  1 -1"/>
         <light diffuse=".5 .5 .5" pos="2  2 2" dir="-1 -1 -1"/>
         <geom rgba="1 1 1 1" name="table" type="box" pos="0 0 -0.01" size="0.4 0.5 0.01"/>
@@ -76,7 +77,7 @@
                         </body>
                     </body>
                 </body>
-                <body name="yumi_link_1_l" pos="0.05355 0.0725 0.41492" quat="0.217632 0.40848 0.313437 0.829179">
+                <!--body name="yumi_link_1_l" pos="0.05355 0.0725 0.41492" quat="0.217632 0.40848 0.313437 0.829179">
                     <inertial pos="0 -0.03 0.12" mass="2" diaginertia="0.1 0.1 0.1" />
                     <joint type="hinge" name="yumi_joint_1_l" pos="0 0 0" axis="0 0 1" limited="true" range="-2.94088 2.94088" />
                     <geom type="mesh" mesh="coarse_link_1" />
@@ -124,30 +125,27 @@
                             </body>
                         </body>
                     </body>
-                </body>
+                </body-->
             </body>
         </body>
 
-        <!--body name="object" pos="0.0 0.0 0.04" >
-            <geom rgba="0.4 0.5 0.9 1.0" type="cylinder" size="0.04 0.038 0.04" density="0.5"/>
-            <joint name="obj_slidex" type="slide" pos="0 0 0" axis="1 0 0" damping="0.0005"/>
-            <joint name="obj_slidey" type="slide" pos="0 0 0" axis="0 1 0" damping="0.0005"/>
-        </body-->
-
-        <body name="goal" pos="-0.1 -0.1 0.3" quat="-5.00202803e-01  4.99804290e-01 -4.99797159e-01  -5.00195590e-01 ">>
-		<!--pos="0 0.0065 0.0837" quat="-0.0137 0 0 0.99991"-->
-	    <site rgba="1 0 0 1" type="sphere" size="0.01" />            
+        <body name="goal" pos="0.0 0.0 0.0">
+            <geom rgba="0 0 1 0.5" type="sphere" size="0.05 0.001 0.1" density='0.00001'/>
+            <joint name="goal_slidex" type="slide" pos="0 0 0" axis="1 0 0" range="-10.3213 10.3" damping="1.0"/>
+            <joint name="goal_slidey" type="slide" pos="0 0 0" axis="0 1 0" range="-10.3213 10.3" damping="1.0"/>
+            <joint name="goal_slidez" type="slide" pos="0 0 0" axis="0 0 1" range="-10.3213 10.3" damping="1.0"/>
         </body>
     </worldbody>
 
     <actuator>
-        <motor joint="yumi_joint_1_r" ctrlrange="-2.0 2.0" ctrllimited="true" />
-        <motor joint="yumi_joint_2_r" ctrlrange="-2.0 2.0" ctrllimited="true" />
-        <motor joint="yumi_joint_7_r" ctrlrange="-2.0 2.0" ctrllimited="true" />
-        <motor joint="yumi_joint_3_r" ctrlrange="-2.0 2.0" ctrllimited="true" />
-        <motor joint="yumi_joint_4_r" ctrlrange="-2.0 2.0" ctrllimited="true" />
-        <motor joint="yumi_joint_5_r" ctrlrange="-2.0 2.0" ctrllimited="true" />
-        <motor joint="yumi_joint_6_r" ctrlrange="-2.0 2.0" ctrllimited="true" />
+        <!-- Don't change ranges here, change them in __init__ of YumiReacher -->
+        <motor joint="yumi_joint_1_r" ctrlrange="-100.0 100.0" ctrllimited="true"/>
+        <motor joint="yumi_joint_2_r" ctrlrange="-100.0 100.0" ctrllimited="true"/>
+        <motor joint="yumi_joint_7_r" ctrlrange="-100.0 100.0" ctrllimited="true"/>
+        <motor joint="yumi_joint_3_r" ctrlrange="-100.0 100.0" ctrllimited="true"/>
+        <motor joint="yumi_joint_4_r" ctrlrange="-100.0 100.0" ctrllimited="true"/>
+        <motor joint="yumi_joint_5_r" ctrlrange="-100.0 100.0" ctrllimited="true"/>
+        <motor joint="yumi_joint_6_r" ctrlrange="-100.0 100.0" ctrllimited="true"/>
         <!--velocity joint="yumi_joint_1_l" ctrlrange="-200.0 200.0" ctrllimited="true" kv="100"/>
         <velocity joint="yumi_joint_2_l" ctrlrange="-20.0 20.0" ctrllimited="true" kv="100"/>
         <velocity joint="yumi_joint_7_l" ctrlrange="-20.0 20.0" ctrllimited="true" kv="60"/>

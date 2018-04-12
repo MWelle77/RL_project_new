@@ -7,6 +7,12 @@ register(
     entry_point='gym.envs.mujoco:YumiEnvSimple',
 )
 
+register(
+    id='Yumi-Simple-v1',
+    max_episode_steps=1000,
+    entry_point='gym.envs.mujoco:YumiEnvSimple1',
+)
+
 # Algorithmic
 # ----------------------------------------
 

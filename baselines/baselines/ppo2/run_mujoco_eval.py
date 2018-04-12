@@ -17,7 +17,7 @@ def train(env_id, num_timesteps, seed):
                             inter_op_parallelism_threads=ncpu)
     tf.Session(config=config).__enter__()
     def make_env():
-        env = gym.make('Yumi-Simple-v0')        
+        env = gym.make('Yumi-Simple-v1')        
         env = bench.Monitor(env, logger.get_dir())
         return env
     env = DummyVecEnv([make_env])
@@ -34,7 +34,7 @@ def train(env_id, num_timesteps, seed):
         ent_coef=0.0,
         lr=3e-4,
         cliprange=0.2,
-        total_timesteps=num_timesteps,name="./ppo_models/teso.pkl")
+        total_timesteps=num_timesteps,name="./ppo_models/isac.pkl")
 
 
 def main():

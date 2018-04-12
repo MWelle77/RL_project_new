@@ -113,13 +113,7 @@ class Runner(object):
             self.obs[:], rewards, self.dones, infos = self.env.step(actions)
 
 
-            if(show):
-                print("***actions***")
-                print(actions)
-                print("***Rewards***")
-                print(rewards)
-                print("***observation***")
-                print(self.obs[:])
+            if(show):                
                 self.env.venv.envs[0].render()
             
 
@@ -159,7 +153,8 @@ def sf01(arr):
     swap and then flatten axes 0 and 1
     """
     s = arr.shape
-    return arr.swapaxes(0, 1).reshape(s[0] * s[1], *s[2:])
+    tem=arr.swapaxes(0, 1).reshape(s[0] * s[1], *s[2:])
+    return tem
 
 def constfn(val):
     def f(_):
@@ -247,7 +242,7 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
 
     nupdates = total_timesteps//nbatch
     for update in range(1, nupdates+1):
-        
+        model.save(name)
         assert nbatch % nminibatches == 0
         nbatch_train = nbatch // nminibatches
         tstart = time.time()

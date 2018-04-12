@@ -110,18 +110,42 @@ class YumiEnvSimple(mujoco_env.MujocoEnv, utils.EzPickle):
         vec = self.sim.data.get_body_xpos('gripper_r_finger_l')-self.sim.data.get_body_xpos('goal')
         reward_dist = - np.linalg.norm(vec)
         reward_ctrl = - np.square(a).sum()
+        #reward_quats = self.sim.data.get_body_xq('gripper_r_finger_l')
 
-        return reward_dist + reward_ctrl
+        #return 10*reward_dist + reward_ctrl
         #reward for doing nothing
         #return - np.linalg.norm(a) # movement is bad
         #return -arm2goal*100*0 - np.linalg.norm(a)*1000 # distance to goal and movment get peneltys
 
+        #reward isac
+        eef = self.get_body_com('gripper_r_base')
+        goal = self.get_body_com('goal')
+        goal_distance = np.linalg.norm(eef - goal)
+        # This is the norm of the joint angles
+        # The ** 4 is to create a "flat" region around [0, 0, 0, ...]
+        q_norm = np.linalg.norm(self.sim.data.qpos.flat[:7]) ** 4 / 100.0
+
+        # TODO in the future
+        # f_desired = np.eye(3)
+        # f_current = body_frame(self, 'gripper_r_base')
+        wt=0.9
+        we=1-wt
+        reward = -(
+            wt * goal_distance * 2.0 +  # Scalars here is to make this part of the reward approx. [0, 1]
+            we * np.linalg.norm(a) / 40 +
+            q_norm
+        )
+        return reward
+
     def _get_obs(self):
+       # return self.sim.data.get_body_xpos('goal')
         return np.concatenate([
              self.sim.data.qpos.flat[:7],
-             self.sim.data.get_body_xpos('gripper_r_finger_l'),
-             self.sim.data.get_body_xpos('goal')
+             self.sim.data.qvel.flat[:7],
+             self.get_body_com('gripper_r_finger_l'),
+             self.get_body_com('goal'),             
          ])
+        
 
     def reset_model(self):
         qpos = self.init_qpos
