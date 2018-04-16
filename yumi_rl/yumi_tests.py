@@ -12,7 +12,7 @@ from gym import spaces
 
 
 #build the enviroment
-env = gym.make('Yumi-Simple-v0')
+env = gym.make('Yumi-Simple-v1')
 env.reset()
 env.render()
 

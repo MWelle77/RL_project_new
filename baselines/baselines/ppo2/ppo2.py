@@ -64,15 +64,19 @@ class Model(object):
         self.loss_names = ['policy_loss', 'value_loss', 'policy_entropy', 'approxkl', 'clipfrac']
 
         def save(save_path):
-            ps = sess.run(params)
-            joblib.dump(ps, save_path)
+            #ps = sess.run(params)
+            #joblib.dump(ps, save_path)
+            saver = tf.train.Saver()
+            saver.save(sess, "./" + save_path)
 
         def load(load_path):
-            loaded_params = joblib.load(load_path)
-            restores = []
-            for p, loaded_p in zip(params, loaded_params):
-                restores.append(p.assign(loaded_p))
-            sess.run(restores)
+            # loaded_params = joblib.load(load_path)
+            # restores = []
+            # for p, loaded_p in zip(params, loaded_params):
+            #     restores.append(p.assign(loaded_p))
+            # sess.run(restores)
+            saver = tf.train.Saver()
+            saver.restore(sess, "./" + load_path)
             # If you want to load weights, also save/load observation scaling inside VecNormalize
 
         self.train = train
@@ -102,7 +106,7 @@ class Runner(object):
     def run(self,show=False):
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones, mb_neglogpacs = [],[],[],[],[],[]
         mb_states = self.states
-        epinfos = []        
+        epinfos = []
         for _ in range(self.nsteps):
             actions, values, self.states, neglogpacs = self.model.step(self.obs, self.states, self.dones)
             mb_obs.append(self.obs.copy())
@@ -112,15 +116,39 @@ class Runner(object):
             mb_dones.append(self.dones)
             self.obs[:], rewards, self.dones, infos = self.env.step(actions)
 
-
-            if(show):                
-                self.env.venv.envs[0].render()
-            
+            if(show):
+                #self.env.venv.envs[0].render()
+                self.env.envs[0].render()
+                print("***actions***")
+                print(actions)
+                print("***Observations***")
+                print(self.obs)
+                print("***Reward***")
+                print(rewards)
+                #self.env.venv.envs[0].render()
 
             for info in infos:
                 maybeepinfo = info.get('episode')
                 if maybeepinfo: epinfos.append(maybeepinfo)
             mb_rewards.append(rewards)
+
+        if(show):
+            print("total_reward: " + str(np.sum(mb_rewards)))
+            plt.subplot(1, 2, 1)
+            plt.plot(mb_rewards)
+            plt.title('Reward ')
+            plt.xlabel('episodes')
+            plt.ylabel('reward')
+
+            plt.subplot(1, 2, 2)
+            mb_actionsplot = np.squeeze(np.asarray(mb_actions))
+            plt.plot(mb_actionsplot)
+            plt.title('Actions ')
+            plt.xlabel('episodes')
+            plt.ylabel('action')
+
+            plt.show()
+
         #batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
         mb_rewards = np.asarray(mb_rewards, dtype=np.float32)
@@ -129,8 +157,6 @@ class Runner(object):
         mb_neglogpacs = np.asarray(mb_neglogpacs, dtype=np.float32)
         mb_dones = np.asarray(mb_dones, dtype=np.bool)
         last_values = self.model.value(self.obs, self.states, self.dones)
-        
-
         #discount/bootstrap off value fn
         mb_returns = np.zeros_like(mb_rewards)
         mb_advs = np.zeros_like(mb_rewards)
@@ -153,8 +179,7 @@ def sf01(arr):
     swap and then flatten axes 0 and 1
     """
     s = arr.shape
-    tem=arr.swapaxes(0, 1).reshape(s[0] * s[1], *s[2:])
-    return tem
+    return arr.swapaxes(0, 1).reshape(s[0] * s[1], *s[2:])
 
 def constfn(val):
     def f(_):
@@ -181,25 +206,12 @@ def eval(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
     
     model = make_model()
     model.load(name)
-    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam)
+    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=1, lam=1)
     
     obs, returns, masks, actions, values, neglogpacs, states, epinfos = runner.run(show=True)
-    total_reward=np.sum(returns)
+    total_return=np.sum(returns)
 
-    print("total reward: " + str(total_reward))
-    plt.subplot(1, 2, 1)
-    plt.plot(returns)
-    plt.title('Reward ')
-    plt.xlabel('episodes')
-    plt.ylabel('reward')
-
-    plt.subplot(1, 2, 2)
-    plt.plot(actions)
-    plt.title('Actions ')
-    plt.xlabel('episodes')
-    plt.ylabel('action')
-
-    plt.show()
+    
 
 
     epinfobuf = deque(maxlen=100)
@@ -208,7 +220,6 @@ def eval(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
     nupdates = total_timesteps//nbatch
     
     env.close()
-
 
 def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95,
@@ -280,7 +291,6 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
         lossvals = np.mean(mblossvals, axis=0)
         tnow = time.time()
         fps = int(nbatch / (tnow - tstart))
-        print(logger.get_dir())
         if update % log_interval == 0 or update == 1:
             ev = explained_variance(values, returns)
             logger.logkv("serial_timesteps", update*nsteps)
