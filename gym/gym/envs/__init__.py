@@ -9,7 +9,7 @@ register(
 
 register(
     id='Yumi-Simple-v1',
-    max_episode_steps=1000,
+    max_episode_steps=500,
     entry_point='gym.envs.mujoco:YumiEnvSimple1',
 )
 

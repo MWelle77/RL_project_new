@@ -1,2 +1,2 @@
-model_checkpoint_path: "test.pkl"
-all_model_checkpoint_paths: "test.pkl"
+model_checkpoint_path: "sin5.pkl"
+all_model_checkpoint_paths: "sin5.pkl"

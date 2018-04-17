@@ -56,7 +56,7 @@ foreceslist5=[]
 totalreward=0
 
 
-for _ in range(1000): # run for 1000 steps
+for _ in range(500): # run for 1000 steps
     env.render()
     #get info from the world
     action = np.zeros(7) #do nothing
@@ -64,7 +64,7 @@ for _ in range(1000): # run for 1000 steps
     #print("performing action:")
     #print(action)
     observation, reward, done, info = env.step(action)
-
+    print(reward)
     #print("observing")
     #print(observation)
     #print("reward")
@@ -80,12 +80,12 @@ for _ in range(1000): # run for 1000 steps
     actionlist5.append(action[5])
     actionlist6.append(action[6])
 
-    foreceslist0.append(observation[-6])
-    foreceslist1.append(observation[-5])
-    foreceslist2.append(observation[-4])
-    foreceslist3.append(observation[-3])
-    foreceslist4.append(observation[-2])
-    foreceslist5.append(observation[-1])
+    # foreceslist0.append(observation[-6])
+    # foreceslist1.append(observation[-5])
+    # foreceslist2.append(observation[-4])
+    # foreceslist3.append(observation[-3])
+    # foreceslist4.append(observation[-2])
+    # foreceslist5.append(observation[-1])
     #forecvec = np.array([observation[-6], observation[-5], observation[-4], observation[-3], observation[-2], observation[-1]])
     #foreceslist.append(forecvec)
 
@@ -98,7 +98,6 @@ plt.plot(rewardlist)
 plt.title('Reward (distance to goal pose)')
 plt.xlabel('episodes')
 plt.ylabel('reward')
-plt.ylim(-300, 0)
 plt.show()
 
 #x=np.linspace(0, 1000, num=100, endpoint=True)
@@ -118,15 +117,15 @@ plt.ylabel('force')
 plt.show()
 
 
-plt.plot(foreceslist0, label="f_x")
-plt.plot(foreceslist1, label="f_y")
-plt.plot(foreceslist2, label="f_z")
-plt.plot(foreceslist3, label="t_x")
-plt.plot(foreceslist4, label="t_y")
-plt.plot(foreceslist5, label="t_z")
-plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+# plt.plot(foreceslist0, label="f_x")
+# plt.plot(foreceslist1, label="f_y")
+# plt.plot(foreceslist2, label="f_z")
+# plt.plot(foreceslist3, label="t_x")
+# plt.plot(foreceslist4, label="t_y")
+# plt.plot(foreceslist5, label="t_z")
+# plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
-plt.title('Adversary forces on right hand')
-plt.xlabel('episodes')
-plt.ylabel('force/torque')
-plt.show()
+# plt.title('Adversary forces on right hand')
+# plt.xlabel('episodes')
+# plt.ylabel('force/torque')
+# plt.show()

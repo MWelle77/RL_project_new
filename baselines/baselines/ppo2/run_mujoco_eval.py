@@ -35,12 +35,12 @@ def train(env_id, num_timesteps, seed):
     set_global_seeds(seed)
     policy = MlpPolicy
 
-    ppo2.eval(policy=policy, env=envs, nsteps=1000, nminibatches=10,
+    ppo2.eval(policy=policy, env=envs, nsteps=500, nminibatches=10,
         lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
         ent_coef=0.0,
         lr=3e-4,
         cliprange=0.2,
-        total_timesteps=num_timesteps,name="test.pkl")
+        total_timesteps=num_timesteps,name="sin5.pkl")
 
 
 def main():
